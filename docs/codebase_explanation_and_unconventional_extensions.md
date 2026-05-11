@@ -7,25 +7,25 @@ Core idea: extract rich representations from pretrained modality models, fuse th
 
 ## High-level structure
 
-- `/home/runner/work/tribev2/tribev2/tribev2/model.py`
+- `tribev2/model.py`
   - Core trainable model (`FmriEncoderModel`)
   - Per-modality projectors, fusion, transformer encoder, subject-aware output layers
-- `/home/runner/work/tribev2/tribev2/tribev2/main.py`
+- `tribev2/main.py`
   - Experiment orchestration (`TribeExperiment`)
   - Connects datasets, transforms, feature extractors, training/eval flow
-- `/home/runner/work/tribev2/tribev2/tribev2/pl_module.py`
+- `tribev2/pl_module.py`
   - PyTorch Lightning wrapper for optimization, metrics, loss
-- `/home/runner/work/tribev2/tribev2/tribev2/demo_utils.py`
+- `tribev2/demo_utils.py`
   - User-facing inference API (`TribeModel.from_pretrained`, `get_events_dataframe`, `predict`)
-- `/home/runner/work/tribev2/tribev2/tribev2/eventstransforms.py`
+- `tribev2/eventstransforms.py`
   - Event pipeline transforms (audio extraction, transcription, chunking, dedup, splitting)
-- `/home/runner/work/tribev2/tribev2/tribev2/studies/`
+- `tribev2/studies/`
   - Dataset adapters (Algonauts2025, Lahner2024, Lebel2023, Wen2017)
-- `/home/runner/work/tribev2/tribev2/tribev2/grids/`
+- `tribev2/grids/`
   - Default configs and grid launch scripts for local/slurm runs
-- `/home/runner/work/tribev2/tribev2/tribev2/plotting/`
+- `tribev2/plotting/`
   - Surface/brain visualization helpers
-- `/home/runner/work/tribev2/tribev2/tribev2/utils_fmri.py`
+- `tribev2/utils_fmri.py`
   - fMRI template-space utilities and surface projection helpers
 
 ## Key technologies

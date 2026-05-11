@@ -5,8 +5,8 @@ This document records the first concrete implementation steps added in-repo.
 ## ✅ Step 1 implemented: explicit rewriting scaffold for event transformations
 
 Added:
-- `/home/runner/work/tribev2/tribev2/tribev2/experimental/rewrite.py`
-- `/home/runner/work/tribev2/tribev2/tribev2/experimental/__init__.py`
+- `tribev2/experimental/rewrite.py`
+- `tribev2/experimental/__init__.py`
 
 What this provides:
 - `EventRewriteRule`: named, composable event rewrite rule

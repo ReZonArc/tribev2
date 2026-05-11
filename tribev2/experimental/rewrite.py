@@ -23,48 +23,52 @@ class EventRewriteRule:
 class EventRewriter:
     rules: tuple[EventRewriteRule, ...]
 
-    def rewrite(self, events: pd.DataFrame) -> pd.DataFrame:
-        out = events.copy()
+    def rewrite(self, events: pd.DataFrame, copy_input: bool = True) -> pd.DataFrame:
+        out = events.copy() if copy_input else events
         for rule in self.rules:
             out = rule.apply(out)
         return out
 
 
 def _ensure_default_timeline_and_subject(events: pd.DataFrame) -> pd.DataFrame:
-    out = events.copy()
-    if "timeline" not in out.columns:
-        out["timeline"] = "default"
+    if "timeline" not in events.columns:
+        events["timeline"] = "default"
     else:
-        out["timeline"] = out["timeline"].fillna("default")
-    if "subject" not in out.columns:
-        out["subject"] = "default"
+        events["timeline"] = events["timeline"].fillna("default")
+    if "subject" not in events.columns:
+        events["subject"] = "default"
     else:
-        out["subject"] = out["subject"].fillna("default")
-    return out
+        events["subject"] = events["subject"].fillna("default")
+    return events
 
 
 def _infer_stop_from_start_and_duration(events: pd.DataFrame) -> pd.DataFrame:
-    out = events.copy()
-    if "start" in out.columns and "duration" in out.columns:
-        has_stop = "stop" in out.columns
-        stop = out["start"] + out["duration"]
+    if "start" in events.columns and "duration" in events.columns:
+        has_stop = "stop" in events.columns
         if has_stop:
-            out["stop"] = out["stop"].fillna(stop)
+            missing_stop = events["stop"].isna()
+            if missing_stop.any():
+                events.loc[missing_stop, "stop"] = (
+                    events.loc[missing_stop, "start"]
+                    + events.loc[missing_stop, "duration"]
+                )
         else:
-            out["stop"] = stop
-    return out
+            events["stop"] = events["start"] + events["duration"]
+    return events
 
 
 def _normalize_word_text(events: pd.DataFrame) -> pd.DataFrame:
-    out = events.copy()
-    if "type" not in out.columns or "text" not in out.columns:
-        return out
-    is_word = out["type"] == "Word"
+    if "type" not in events.columns or "text" not in events.columns:
+        return events
+    is_word = events["type"] == "Word"
     normalized_text = (
-        out.loc[is_word, "text"].astype(str).str.strip().str.replace(r"\s+", " ", regex=True)
+        events.loc[is_word, "text"]
+        .astype(str)
+        .str.strip()
+        .str.replace(r"\s+", " ", regex=True)
     )
-    out.loc[is_word, "text"] = normalized_text
-    return out
+    events.loc[is_word, "text"] = normalized_text
+    return events
 
 
 def default_rewriter() -> EventRewriter:
