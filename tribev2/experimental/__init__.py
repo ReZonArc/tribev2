@@ -10,10 +10,12 @@ from .rewrite import (
     EventRewriter,
     default_rewriter,
 )
+from .vfs import EventNamespaceFS
 
 __all__ = [
     "EventNormalizationContract",
     "EventRewriteRule",
     "EventRewriter",
+    "EventNamespaceFS",
     "default_rewriter",
 ]

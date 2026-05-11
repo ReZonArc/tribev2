@@ -27,9 +27,22 @@ Why this is the right first step:
 - It is zero-disruption to existing training/inference APIs.
 - It creates a clean handoff point to future Maude formal rules or alternate runtimes.
 
+## ✅ Step 2 implemented: file-backed 9P-friendly namespace adapter
+
+Added:
+- `tribev2/experimental/vfs.py`
+
+What this provides:
+- `EventNamespaceFS`: lightweight virtual namespace shape over a local folder
+- canonical paths for composable tooling:
+  - `/inputs/*`
+  - `/events/*`
+  - `/outputs/*`
+  - `/cache/features/*`
+- path-safe read/write helpers for inputs, event frames, outputs, and cached features
+
 ## Suggested next steps (not yet implemented)
 
 1. Add a translator from `EventRewriteRule` sets to Maude module text.
 2. Add a rule-execution trace serializer for reproducibility/debugging.
-3. Add a file-backed adapter layer to expose rewrite pipeline I/O in a 9P-friendly namespace shape.
-4. Add integration hook in `demo_utils.get_audio_and_text_events` as an optional post-normalization stage.
+3. Add integration hook in `demo_utils.get_audio_and_text_events` as an optional post-normalization stage.

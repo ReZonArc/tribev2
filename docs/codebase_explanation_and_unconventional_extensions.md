@@ -100,6 +100,12 @@ For low-risk, high-leverage first steps, this repository now includes a minimal 
 - run them as a deterministic pipeline over pandas event frames,
 - serve as a bridge toward future Maude-style formalization.
 
+It also includes a minimal **file-backed namespace scaffold** (`tribev2.experimental.vfs`) to:
+
+- expose inputs, events, outputs, and cached features through a 9P-friendly path layout,
+- provide composable file-style I/O adapters for process-agnostic integration.
+
 See:
 - `tribev2/experimental/rewrite.py`
+- `tribev2/experimental/vfs.py`
 - `docs/unconventional_runtime_initial_steps.md`
