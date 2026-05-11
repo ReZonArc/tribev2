@@ -101,5 +101,5 @@ For low-risk, high-leverage first steps, this repository now includes a minimal 
 - serve as a bridge toward future Maude-style formalization.
 
 See:
-- `/home/runner/work/tribev2/tribev2/tribev2/experimental/rewrite.py`
-- `/home/runner/work/tribev2/tribev2/docs/unconventional_runtime_initial_steps.md`
+- `tribev2/experimental/rewrite.py`
+- `docs/unconventional_runtime_initial_steps.md`

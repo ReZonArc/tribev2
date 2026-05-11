@@ -60,9 +60,10 @@ def _normalize_word_text(events: pd.DataFrame) -> pd.DataFrame:
     if "type" not in out.columns or "text" not in out.columns:
         return out
     is_word = out["type"] == "Word"
-    out.loc[is_word, "text"] = (
+    normalized_text = (
         out.loc[is_word, "text"].astype(str).str.strip().str.replace(r"\s+", " ", regex=True)
     )
+    out.loc[is_word, "text"] = normalized_text
     return out
 
 
