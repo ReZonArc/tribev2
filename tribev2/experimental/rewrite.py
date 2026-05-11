@@ -12,6 +12,7 @@ import pandas as pd
 
 RewriteFn = tp.Callable[[pd.DataFrame], pd.DataFrame]
 ContractFn = tp.Callable[[pd.DataFrame], bool]
+# Event times are represented in seconds in TRIBE event dataframes.
 FLOAT_COMPARISON_TOLERANCE = 1e-9
 
 

@@ -64,7 +64,10 @@ def test_contracts_can_be_enforced_or_disabled() -> None:
         contracts=contracts,
     )
 
-    with pytest.raises(ValueError, match="stop_matches_start_plus_duration"):
+    with pytest.raises(
+        ValueError,
+        match="stop_matches_start_plus_duration: stop must equal start \\+ duration where all are set",
+    ):
         rewriter.rewrite(events, enforce_contracts=True)
 
     out = rewriter.rewrite(events, enforce_contracts=False)
