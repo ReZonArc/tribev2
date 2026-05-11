@@ -12,7 +12,9 @@ import pandas as pd
 
 RewriteFn = tp.Callable[[pd.DataFrame], pd.DataFrame]
 ContractFn = tp.Callable[[pd.DataFrame], bool]
-FLOAT_COMPARISON_TOLERANCE = 1e-9  # Event times are represented in seconds.
+# Event timestamps are second-based floats; 1e-9 is a conservative nanosecond
+# tolerance for floating-point arithmetic in start+duration comparisons.
+FLOAT_COMPARISON_TOLERANCE = 1e-9
 
 
 @dataclass(frozen=True)
@@ -45,15 +47,15 @@ class EventRewriter:
         collect_trace: bool,
     ) -> tuple[pd.DataFrame, tuple[str, ...]]:
         out = events.copy() if copy_input else events
-        applied_rules: list[str] | None = [] if collect_trace else None
+        applied_rules: list[str] = []
         for rule in self.rules:
             out = rule.apply(out)
-            if applied_rules is not None:
+            if collect_trace:
                 applied_rules.append(rule.name)
         if enforce_contracts:
             for contract in self.contracts:
                 contract.validate(out)
-        return out, tuple(applied_rules or ())
+        return out, tuple(applied_rules) if collect_trace else ()
 
     def rewrite(
         self,
