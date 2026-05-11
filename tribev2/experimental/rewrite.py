@@ -24,6 +24,11 @@ class EventRewriter:
     rules: tuple[EventRewriteRule, ...]
 
     def rewrite(self, events: pd.DataFrame, copy_input: bool = True) -> pd.DataFrame:
+        """Apply rewrite rules in order.
+
+        When ``copy_input`` is True (default), the returned frame is a rewritten copy.
+        When False, rules rewrite the provided dataframe in-place and return it.
+        """
         out = events.copy() if copy_input else events
         for rule in self.rules:
             out = rule.apply(out)
@@ -31,6 +36,7 @@ class EventRewriter:
 
 
 def _ensure_default_timeline_and_subject(events: pd.DataFrame) -> pd.DataFrame:
+    """Rewrite in-place: ensure non-null timeline/subject fields."""
     if "timeline" not in events.columns:
         events["timeline"] = "default"
     else:
@@ -43,6 +49,7 @@ def _ensure_default_timeline_and_subject(events: pd.DataFrame) -> pd.DataFrame:
 
 
 def _infer_stop_from_start_and_duration(events: pd.DataFrame) -> pd.DataFrame:
+    """Rewrite in-place: populate stop from start+duration when missing."""
     if "start" in events.columns and "duration" in events.columns:
         has_stop = "stop" in events.columns
         if has_stop:
@@ -58,6 +65,7 @@ def _infer_stop_from_start_and_duration(events: pd.DataFrame) -> pd.DataFrame:
 
 
 def _normalize_word_text(events: pd.DataFrame) -> pd.DataFrame:
+    """Rewrite in-place: trim/normalize whitespace for Word event text."""
     if "type" not in events.columns or "text" not in events.columns:
         return events
     is_word = events["type"] == "Word"
