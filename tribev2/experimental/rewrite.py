@@ -26,8 +26,10 @@ class EventRewriter:
     def rewrite(self, events: pd.DataFrame, copy_input: bool = True) -> pd.DataFrame:
         """Apply rewrite rules in order.
 
-        When ``copy_input`` is True (default), the returned frame is a rewritten copy.
-        When False, rules rewrite the provided dataframe in-place and return it.
+        When ``copy_input`` is True (default), the rewriter first copies ``events``
+        and rules run against that copy.
+        When False, the original dataframe is passed directly to rules and may be
+        mutated in-place.
         """
         out = events.copy() if copy_input else events
         for rule in self.rules:
@@ -66,12 +68,10 @@ def _normalize_word_text(events: pd.DataFrame) -> pd.DataFrame:
     if "type" not in events.columns or "text" not in events.columns:
         return events
     is_word = events["type"] == "Word"
-    normalized_text = (
-        events.loc[is_word, "text"]
-        .astype(str)
-        .str.strip()
-        .str.replace(r"\s+", " ", regex=True)
-    )
+    word_text = events.loc[is_word, "text"]
+    if not pd.api.types.is_string_dtype(word_text):
+        word_text = word_text.astype(str)
+    normalized_text = word_text.str.strip().str.replace(r"\s+", " ", regex=True)
     events.loc[is_word, "text"] = normalized_text
     return events
 
