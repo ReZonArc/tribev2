@@ -9,6 +9,7 @@ from .channels import (
     EventChannel,
     ServiceNamespace,
 )
+from .hybrid import HybridRuntime, render_maude_module
 from .rewrite import (
     EventNormalizationContract,
     EventRewriteRule,
@@ -24,6 +25,8 @@ __all__ = [
     "EventNamespaceFS",
     "EventRewriteRule",
     "EventRewriter",
+    "HybridRuntime",
     "ServiceNamespace",
     "default_rewriter",
+    "render_maude_module",
 ]

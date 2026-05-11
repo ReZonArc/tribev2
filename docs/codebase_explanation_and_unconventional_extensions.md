@@ -105,7 +105,16 @@ It also includes a minimal **file-backed namespace scaffold** (`tribev2.experime
 - expose inputs, events, outputs, and cached features through a 9P-friendly path layout,
 - provide composable file-style I/O adapters for process-agnostic integration.
 
+And a minimal **Limbo-style channel runtime scaffold** (`tribev2.experimental.channels`) plus a
+**hybrid DSL bridge** (`tribev2.experimental.hybrid`) to:
+
+- mount event stages as namespace-addressable services and execute them sequentially or threaded,
+- render rewrite declarations as conservative Maude-style module text,
+- connect explicit rewrite semantics to practical distributed-style execution.
+
 See:
 - `tribev2/experimental/rewrite.py`
 - `tribev2/experimental/vfs.py`
+- `tribev2/experimental/channels.py`
+- `tribev2/experimental/hybrid.py`
 - `docs/unconventional_runtime_initial_steps.md`
