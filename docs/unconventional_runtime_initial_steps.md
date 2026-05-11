@@ -11,10 +11,16 @@ Added:
 What this provides:
 - `EventRewriteRule`: named, composable event rewrite rule
 - `EventRewriter`: deterministic pipeline runner over pandas DataFrames
+- `EventNormalizationContract`: explicit post-rewrite normalization contract checks
 - built-in starter rules:
   - `ensure_default_timeline_and_subject`
   - `infer_stop_from_start_and_duration`
   - `normalize_word_text`
+- built-in starter contracts:
+  - `default_timeline_and_subject`
+  - `stop_matches_start_plus_duration`
+  - `word_text_is_normalized`
+- optional rule-execution trace output for reproducibility/auditability
 
 Why this is the right first step:
 - It directly mirrors the event-pipeline structure already used by TRIBE v2.

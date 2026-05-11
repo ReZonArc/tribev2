@@ -11,6 +11,7 @@ import pandas as pd
 
 
 RewriteFn = tp.Callable[[pd.DataFrame], pd.DataFrame]
+ContractFn = tp.Callable[[pd.DataFrame], bool]
 
 
 @dataclass(frozen=True)
@@ -20,20 +21,49 @@ class EventRewriteRule:
 
 
 @dataclass(frozen=True)
+class EventNormalizationContract:
+    name: str
+    check: ContractFn
+    violation_message: str
+
+    def validate(self, events: pd.DataFrame) -> None:
+        if not self.check(events):
+            raise ValueError(f"{self.name}: {self.violation_message}")
+
+
+@dataclass(frozen=True)
 class EventRewriter:
     rules: tuple[EventRewriteRule, ...]
+    contracts: tuple[EventNormalizationContract, ...] = ()
 
-    def rewrite(self, events: pd.DataFrame, copy_input: bool = True) -> pd.DataFrame:
+    def rewrite(
+        self,
+        events: pd.DataFrame,
+        copy_input: bool = True,
+        enforce_contracts: bool = True,
+        return_trace: bool = False,
+    ) -> pd.DataFrame | tuple[pd.DataFrame, tuple[str, ...]]:
         """Apply rewrite rules in order.
 
         When ``copy_input`` is True (default), the rewriter first copies ``events``
         and rules run against that copy.
         When False, the original dataframe is passed directly to rules and may be
         mutated in-place.
+        When ``enforce_contracts`` is True (default), all contracts are validated
+        after rules are applied and a ``ValueError`` is raised on violation.
+        When ``return_trace`` is True, a tuple with the applied rule names is
+        returned alongside the rewritten dataframe.
         """
         out = events.copy() if copy_input else events
+        applied_rules: list[str] = []
         for rule in self.rules:
             out = rule.apply(out)
+            applied_rules.append(rule.name)
+        if enforce_contracts:
+            for contract in self.contracts:
+                contract.validate(out)
+        if return_trace:
+            return out, tuple(applied_rules)
         return out
 
 
@@ -86,6 +116,41 @@ def _normalize_word_text(events: pd.DataFrame) -> pd.DataFrame:
     return events
 
 
+def _contract_has_default_timeline_and_subject(events: pd.DataFrame) -> bool:
+    for column in ("timeline", "subject"):
+        if column not in events.columns:
+            return False
+        if events[column].isna().any():
+            return False
+    return True
+
+
+def _contract_stop_matches_start_plus_duration(events: pd.DataFrame) -> bool:
+    required = {"start", "duration", "stop"}
+    if not required.issubset(events.columns):
+        return True
+    has_start_duration = events["start"].notna() & events["duration"].notna()
+    if not has_start_duration.any():
+        return True
+    if events.loc[has_start_duration, "stop"].isna().any():
+        return False
+    comparable = events.loc[has_start_duration, ["start", "duration", "stop"]]
+    expected = comparable["start"] + comparable["duration"]
+    return ((comparable["stop"] - expected).abs() <= 1e-9).all()
+
+
+def _contract_word_text_is_normalized(events: pd.DataFrame) -> bool:
+    if "type" not in events.columns or "text" not in events.columns:
+        return True
+    word_text = events.loc[events["type"] == "Word", "text"].dropna()
+    if word_text.empty:
+        return True
+    normalized = (
+        word_text.astype("string").str.strip().str.replace(r"\s+", " ", regex=True)
+    )
+    return normalized.equals(word_text.astype("string"))
+
+
 def default_rewriter() -> EventRewriter:
     return EventRewriter(
         rules=(
@@ -98,5 +163,24 @@ def default_rewriter() -> EventRewriter:
                 apply=_infer_stop_from_start_and_duration,
             ),
             EventRewriteRule(name="normalize_word_text", apply=_normalize_word_text),
-        )
+        ),
+        contracts=(
+            EventNormalizationContract(
+                name="default_timeline_and_subject",
+                check=_contract_has_default_timeline_and_subject,
+                violation_message="timeline/subject must exist and be non-null",
+            ),
+            EventNormalizationContract(
+                name="stop_matches_start_plus_duration",
+                check=_contract_stop_matches_start_plus_duration,
+                violation_message="stop must equal start + duration where all are set",
+            ),
+            EventNormalizationContract(
+                name="word_text_is_normalized",
+                check=_contract_word_text_is_normalized,
+                violation_message=(
+                    "Word text must be trimmed and contain single-space separators"
+                ),
+            ),
+        ),
     )
