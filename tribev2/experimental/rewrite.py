@@ -68,11 +68,21 @@ def _normalize_word_text(events: pd.DataFrame) -> pd.DataFrame:
     if "type" not in events.columns or "text" not in events.columns:
         return events
     is_word = events["type"] == "Word"
+    if not is_word.any():
+        return events
+
     word_text = events.loc[is_word, "text"]
-    if not pd.api.types.is_string_dtype(word_text):
-        word_text = word_text.astype(str)
-    normalized_text = word_text.str.strip().str.replace(r"\s+", " ", regex=True)
-    events.loc[is_word, "text"] = normalized_text
+    non_missing = word_text.notna()
+    if not non_missing.any():
+        return events
+
+    normalized_text = (
+        word_text.loc[non_missing]
+        .astype("string")
+        .str.strip()
+        .str.replace(r"\s+", " ", regex=True)
+    )
+    events.loc[normalized_text.index, "text"] = normalized_text
     return events
 
 
