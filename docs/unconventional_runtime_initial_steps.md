@@ -69,9 +69,29 @@ Why this is the right next step:
   mutable state between services — matching the Inferno/Limbo concurrency model.
 - Fully zero-disruption: existing training/inference APIs are unchanged.
 
+## ✅ Step 4 implemented: hybrid DSL bridge (Maude semantics + Limbo execution)
+
+Added:
+- `tribev2/experimental/hybrid.py`
+
+What this provides:
+- `render_maude_module`: emits conservative Maude-style module text from
+  `EventRewriter` declarations (rules + contracts).
+- `HybridRuntime`: mounts each rewrite rule into a `ServiceNamespace` and runs
+  the rewrite pipeline either sequentially or with channel-based threaded
+  execution.
+- `run_with_trace`: returns both transformed events and an explicit rule trace,
+  preserving semantic transparency while using the operational runtime model.
+
+Why this is the right next step:
+- It combines formalized rewrite declarations with practical channel-based
+  execution in one minimal bridge API.
+- It keeps behavior aligned with existing rewrite contracts while enabling
+  Limbo-style runtime composition.
+- Existing training/inference APIs remain unchanged.
+
 ## Suggested next steps (not yet implemented)
 
-1. Add a translator from `EventRewriteRule` sets to Maude module text.
-2. Add a rule-execution trace serializer for reproducibility/debugging.
-3. Add integration hook in `demo_utils.get_audio_and_text_events` as an optional post-normalization stage.
-4. Add remote-capable channels (e.g., via sockets or gRPC) so services can run on separate nodes.
+1. Add a rule-execution trace serializer for reproducibility/debugging artifacts.
+2. Add integration hook in `demo_utils.get_audio_and_text_events` as an optional post-normalization stage.
+3. Add remote-capable channels (e.g., via sockets or gRPC) so services can run on separate nodes.
