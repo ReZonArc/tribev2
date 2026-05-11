@@ -51,3 +51,8 @@ def test_hybrid_runtime_threaded_and_sequential_match() -> None:
     thr = runtime.run(events, threaded=True)
 
     pd.testing.assert_frame_equal(seq, thr)
+
+
+def test_hybrid_runtime_slash_prefix_maps_to_root_paths() -> None:
+    runtime = HybridRuntime(rewriter=default_rewriter(), rewrite_prefix="///")
+    assert runtime.rewrite_paths()[0].startswith("/00-")

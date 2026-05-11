@@ -13,7 +13,7 @@ import pandas as pd
 from .channels import ChannelService, ServiceNamespace
 from .rewrite import EventRewriter
 
-DEFAULT_REWRITE_PREFIX = "/rewrite"
+DEFAULT_REWRITE_PATH = "/rewrite"
 
 
 def _dsl_identifier(name: str) -> str:
@@ -52,9 +52,17 @@ class HybridRuntime:
 
     rewriter: EventRewriter
     namespace: ServiceNamespace = field(default_factory=ServiceNamespace)
-    rewrite_prefix: str = DEFAULT_REWRITE_PREFIX
+    rewrite_prefix: str = DEFAULT_REWRITE_PATH
+    _prefix_normalized: str = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
+        raw_prefix = self.rewrite_prefix.strip()
+        if not raw_prefix:
+            self._prefix_normalized = DEFAULT_REWRITE_PATH
+        elif not raw_prefix.strip("/"):
+            self._prefix_normalized = "/"
+        else:
+            self._prefix_normalized = f"/{raw_prefix.strip('/')}"
         self._mount_rule_services()
 
     def _mount_rule_services(self) -> None:
@@ -65,8 +73,10 @@ class HybridRuntime:
             )
 
     def _path_for_rule(self, index: int, rule_name: str) -> str:
-        prefix = "/" + self.rewrite_prefix.strip("/")
-        return f"{prefix}/{index:02d}-{_dsl_identifier(rule_name)}"
+        suffix = f"{index:02d}-{_dsl_identifier(rule_name)}"
+        if self._prefix_normalized == "/":
+            return f"/{suffix}"
+        return f"{self._prefix_normalized}/{suffix}"
 
     def rewrite_paths(self) -> tuple[str, ...]:
         return tuple(
@@ -85,13 +95,14 @@ class HybridRuntime:
         copy_input: bool = True,
         enforce_contracts: bool = True,
     ) -> pd.DataFrame:
-        out = events.copy() if copy_input else events
         paths = self.rewrite_paths()
-        if paths:
-            out = self.namespace.run_pipeline(paths, out, threaded=threaded)
-        if enforce_contracts:
-            for contract in self.rewriter.contracts:
-                contract.validate(out)
+        out, _ = self._execute(
+            events=events,
+            paths=paths,
+            threaded=threaded,
+            copy_input=copy_input,
+            enforce_contracts=enforce_contracts,
+        )
         return out
 
     def run_with_trace(
@@ -102,11 +113,30 @@ class HybridRuntime:
         copy_input: bool = True,
         enforce_contracts: bool = True,
     ) -> tuple[pd.DataFrame, tuple[str, ...]]:
-        out = self.run(
-            events,
+        paths = self.rewrite_paths()
+        out, trace = self._execute(
+            events=events,
+            paths=paths,
             threaded=threaded,
             copy_input=copy_input,
             enforce_contracts=enforce_contracts,
         )
-        trace = tuple(rule.name for rule in self.rewriter.rules)
+        return out, trace
+
+    def _execute(
+        self,
+        *,
+        events: pd.DataFrame,
+        paths: tuple[str, ...],
+        threaded: bool,
+        copy_input: bool,
+        enforce_contracts: bool,
+    ) -> tuple[pd.DataFrame, tuple[str, ...]]:
+        out = events.copy() if copy_input else events
+        if paths:
+            out = self.namespace.run_pipeline(paths, out, threaded=threaded)
+        if enforce_contracts:
+            for contract in self.rewriter.contracts:
+                contract.validate(out)
+        trace = tuple(rule.name for rule in self.rewriter.rules[: len(paths)])
         return out, trace

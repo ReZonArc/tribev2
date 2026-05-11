@@ -92,6 +92,6 @@ Why this is the right next step:
 
 ## Suggested next steps (not yet implemented)
 
-1. Add a rule-execution trace serializer for reproducibility/debugging artifacts.
+1. Add a rule-execution trace serializer to persist `run_with_trace` output for reproducibility/debugging artifacts.
 2. Add integration hook in `demo_utils.get_audio_and_text_events` as an optional post-normalization stage.
 3. Add remote-capable channels (e.g., via sockets or gRPC) so services can run on separate nodes.
