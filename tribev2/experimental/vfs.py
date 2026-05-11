@@ -62,26 +62,26 @@ class EventNamespaceFS:
     def read_text(self, virtual_path: str, encoding: str = "utf-8") -> str:
         return self.to_host_path(virtual_path).read_text(encoding=encoding)
 
-    def write_input_text(self, name: str, text: str, encoding: str = "utf-8") -> str:
-        host_path = self.root / "inputs" / _normalize_virtual_path(name)
+    def write_input_text(self, path: str, text: str, encoding: str = "utf-8") -> str:
+        host_path = self.root / "inputs" / _normalize_virtual_path(path)
         host_path.parent.mkdir(parents=True, exist_ok=True)
         host_path.write_text(text, encoding=encoding)
         return "/" + host_path.relative_to(self.root).as_posix()
 
-    def write_events(self, events: pd.DataFrame, name: str = "events.jsonl") -> str:
-        host_path = self.root / "events" / _normalize_virtual_path(name)
+    def write_events(self, events: pd.DataFrame, path: str = "events.jsonl") -> str:
+        host_path = self.root / "events" / _normalize_virtual_path(path)
         host_path.parent.mkdir(parents=True, exist_ok=True)
         host_path.write_text(events.to_json(orient="records", lines=True), encoding="utf-8")
         return "/" + host_path.relative_to(self.root).as_posix()
 
-    def write_output_json(self, name: str, payload: tp.Any) -> str:
-        host_path = self.root / "outputs" / _normalize_virtual_path(name)
+    def write_output_json(self, path: str, payload: tp.Any) -> str:
+        host_path = self.root / "outputs" / _normalize_virtual_path(path)
         host_path.parent.mkdir(parents=True, exist_ok=True)
         host_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
         return "/" + host_path.relative_to(self.root).as_posix()
 
-    def write_cached_feature_bytes(self, name: str, data: bytes) -> str:
-        host_path = self.root / "cache" / "features" / _normalize_virtual_path(name)
+    def write_cached_feature_bytes(self, path: str, data: bytes) -> str:
+        host_path = self.root / "cache" / "features" / _normalize_virtual_path(path)
         host_path.parent.mkdir(parents=True, exist_ok=True)
         host_path.write_bytes(data)
         return "/" + host_path.relative_to(self.root).as_posix()
