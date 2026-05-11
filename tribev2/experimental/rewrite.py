@@ -37,14 +37,11 @@ class EventRewriter:
 
 def _ensure_default_timeline_and_subject(events: pd.DataFrame) -> pd.DataFrame:
     """Rewrite in-place: ensure non-null timeline/subject fields."""
-    if "timeline" not in events.columns:
-        events["timeline"] = "default"
-    else:
-        events["timeline"] = events["timeline"].fillna("default")
-    if "subject" not in events.columns:
-        events["subject"] = "default"
-    else:
-        events["subject"] = events["subject"].fillna("default")
+    for column in ("timeline", "subject"):
+        if column not in events.columns:
+            events[column] = "default"
+        else:
+            events[column] = events[column].fillna("default")
     return events
 
 
