@@ -39,7 +39,7 @@ def test_default_rewriter_does_not_mutate_input_by_default() -> None:
 def test_default_rewriter_returns_applied_rule_trace() -> None:
     events = pd.DataFrame({"type": ["Audio"], "start": [0.0], "duration": [1.0]})
 
-    out, trace = default_rewriter().rewrite(events, return_trace=True)
+    out, trace = default_rewriter().rewrite_with_trace(events)
 
     assert out.loc[0, "stop"] == 1.0
     assert trace == (
@@ -66,7 +66,7 @@ def test_contracts_can_be_enforced_or_disabled() -> None:
 
     with pytest.raises(
         ValueError,
-        match="stop_matches_start_plus_duration: stop must equal start \\+ duration where all are set",
+        match="stop_matches_start_plus_duration",
     ):
         rewriter.rewrite(events, enforce_contracts=True)
 

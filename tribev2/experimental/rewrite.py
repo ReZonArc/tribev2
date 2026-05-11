@@ -12,8 +12,7 @@ import pandas as pd
 
 RewriteFn = tp.Callable[[pd.DataFrame], pd.DataFrame]
 ContractFn = tp.Callable[[pd.DataFrame], bool]
-# Event times are represented in seconds in TRIBE event dataframes.
-FLOAT_COMPARISON_TOLERANCE = 1e-9
+FLOAT_COMPARISON_TOLERANCE = 1e-9  # Event times are represented in seconds.
 
 
 @dataclass(frozen=True)
@@ -38,13 +37,30 @@ class EventRewriter:
     rules: tuple[EventRewriteRule, ...]
     contracts: tuple[EventNormalizationContract, ...] = ()
 
+    def _rewrite_internal(
+        self,
+        events: pd.DataFrame,
+        copy_input: bool,
+        enforce_contracts: bool,
+        collect_trace: bool,
+    ) -> tuple[pd.DataFrame, tuple[str, ...]]:
+        out = events.copy() if copy_input else events
+        applied_rules: list[str] | None = [] if collect_trace else None
+        for rule in self.rules:
+            out = rule.apply(out)
+            if applied_rules is not None:
+                applied_rules.append(rule.name)
+        if enforce_contracts:
+            for contract in self.contracts:
+                contract.validate(out)
+        return out, tuple(applied_rules or ())
+
     def rewrite(
         self,
         events: pd.DataFrame,
         copy_input: bool = True,
         enforce_contracts: bool = True,
-        return_trace: bool = False,
-    ) -> pd.DataFrame | tuple[pd.DataFrame, tuple[str, ...]]:
+    ) -> pd.DataFrame:
         """Apply rewrite rules in order.
 
         When ``copy_input`` is True (default), the rewriter first copies ``events``
@@ -53,20 +69,28 @@ class EventRewriter:
         mutated in-place.
         When ``enforce_contracts`` is True (default), all contracts are validated
         after rules are applied and a ``ValueError`` is raised on violation.
-        When ``return_trace`` is True, a tuple with the applied rule names is
-        returned alongside the rewritten dataframe.
         """
-        out = events.copy() if copy_input else events
-        applied_rules: list[str] = []
-        for rule in self.rules:
-            out = rule.apply(out)
-            applied_rules.append(rule.name)
-        if enforce_contracts:
-            for contract in self.contracts:
-                contract.validate(out)
-        if return_trace:
-            return out, tuple(applied_rules)
+        out, _ = self._rewrite_internal(
+            events=events,
+            copy_input=copy_input,
+            enforce_contracts=enforce_contracts,
+            collect_trace=False,
+        )
         return out
+
+    def rewrite_with_trace(
+        self,
+        events: pd.DataFrame,
+        copy_input: bool = True,
+        enforce_contracts: bool = True,
+    ) -> tuple[pd.DataFrame, tuple[str, ...]]:
+        """Apply rewrite rules and return an explicit rule-execution trace."""
+        return self._rewrite_internal(
+            events=events,
+            copy_input=copy_input,
+            enforce_contracts=enforce_contracts,
+            collect_trace=True,
+        )
 
 
 def _ensure_default_timeline_and_subject(events: pd.DataFrame) -> pd.DataFrame:
@@ -108,14 +132,13 @@ def _normalize_word_text(events: pd.DataFrame) -> pd.DataFrame:
     if not non_missing.any():
         return events
 
-    normalized_text = (
-        word_text.loc[non_missing]
-        .astype("string")
-        .str.strip()
-        .str.replace(r"\s+", " ", regex=True)
-    )
+    normalized_text = _normalize_text_values(word_text.loc[non_missing])
     events.loc[normalized_text.index, "text"] = normalized_text
     return events
+
+
+def _normalize_text_values(text: pd.Series) -> pd.Series:
+    return text.astype("string").str.strip().str.replace(r"\s+", " ", regex=True)
 
 
 def _contract_has_default_timeline_and_subject(events: pd.DataFrame) -> bool:
@@ -148,7 +171,7 @@ def _contract_word_text_is_normalized(events: pd.DataFrame) -> bool:
     if word_text.empty:
         return True
     word_text_string = word_text.astype("string")
-    normalized = word_text_string.str.strip().str.replace(r"\s+", " ", regex=True)
+    normalized = _normalize_text_values(word_text)
     return normalized.equals(word_text_string)
 
 
