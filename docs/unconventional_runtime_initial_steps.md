@@ -41,8 +41,37 @@ What this provides:
   - `/cache/features/*`
 - path-safe read/write helpers for inputs, event frames, outputs, and cached features
 
+## ✅ Step 3 implemented: Limbo / Inferno-style distributed namespace
+
+Added:
+- `tribev2/experimental/channels.py`
+
+What this provides:
+- `EventChannel`: a typed, buffered channel for passing event DataFrames between
+  pipeline stages, inspired by Limbo's `chan` type.  Producers call `send()`;
+  consumers call `recv()`; `close()` signals end-of-stream.
+- `ChannelService`: a named pipeline service that reads from an input channel,
+  applies a transform function, and writes results to an output channel.  Each
+  service runs in its own daemon thread when started with `start()`.
+- `ServiceNamespace`: a namespace where services are mounted at named paths
+  (inspired by Plan 9 / Inferno `bind`/`mount`).  Supports:
+  - `mount(path, service)` / `unmount(path)` / `list_mounts()`
+  - `compose(*paths)` → returns a sequential pipeline callable
+  - `run_pipeline(paths, events)` → sequential execution in the calling thread
+  - `run_pipeline(paths, events, threaded=True)` → channel-based execution with
+    one daemon thread per service (full Limbo-style channel passing)
+
+Why this is the right next step:
+- It directly extends the rewrite/vfs scaffold to distributed execution.
+- Each pipeline stage (event normalization, feature extraction, etc.) can be
+  mounted as an independent service and composed by namespace path.
+- `threaded=True` provides true channel-based stage separation with no shared
+  mutable state between services — matching the Inferno/Limbo concurrency model.
+- Fully zero-disruption: existing training/inference APIs are unchanged.
+
 ## Suggested next steps (not yet implemented)
 
 1. Add a translator from `EventRewriteRule` sets to Maude module text.
 2. Add a rule-execution trace serializer for reproducibility/debugging.
 3. Add integration hook in `demo_utils.get_audio_and_text_events` as an optional post-normalization stage.
+4. Add remote-capable channels (e.g., via sockets or gRPC) so services can run on separate nodes.
