@@ -12,6 +12,7 @@ import pandas as pd
 
 RewriteFn = tp.Callable[[pd.DataFrame], pd.DataFrame]
 ContractFn = tp.Callable[[pd.DataFrame], bool]
+FLOAT_COMPARISON_TOLERANCE = 1e-9
 
 
 @dataclass(frozen=True)
@@ -136,7 +137,7 @@ def _contract_stop_matches_start_plus_duration(events: pd.DataFrame) -> bool:
         return False
     comparable = events.loc[has_start_duration, ["start", "duration", "stop"]]
     expected = comparable["start"] + comparable["duration"]
-    return ((comparable["stop"] - expected).abs() <= 1e-9).all()
+    return ((comparable["stop"] - expected).abs() <= FLOAT_COMPARISON_TOLERANCE).all()
 
 
 def _contract_word_text_is_normalized(events: pd.DataFrame) -> bool:
@@ -145,10 +146,9 @@ def _contract_word_text_is_normalized(events: pd.DataFrame) -> bool:
     word_text = events.loc[events["type"] == "Word", "text"].dropna()
     if word_text.empty:
         return True
-    normalized = (
-        word_text.astype("string").str.strip().str.replace(r"\s+", " ", regex=True)
-    )
-    return normalized.equals(word_text.astype("string"))
+    word_text_string = word_text.astype("string")
+    normalized = word_text_string.str.strip().str.replace(r"\s+", " ", regex=True)
+    return normalized.equals(word_text_string)
 
 
 def default_rewriter() -> EventRewriter:
