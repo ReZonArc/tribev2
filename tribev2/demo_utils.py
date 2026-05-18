@@ -64,13 +64,26 @@ def download_file(url: str, path: str | Path) -> Path:
 
 
 def get_audio_and_text_events(
-    events: pd.DataFrame, audio_only: bool = False
+    events: pd.DataFrame,
+    audio_only: bool = False,
+    normalize_events: bool = False,
 ) -> pd.DataFrame:
     """Run the audio/video-to-text pipeline on an events DataFrame.
 
     Extracts audio from video, chunks long clips, transcribes words, and
     attaches sentence/context annotations.  Set *audio_only* to ``True``
     to skip the transcription and text stages.
+
+    Parameters
+    ----------
+    events:
+        Input events DataFrame with at least Audio or Video events.
+    audio_only:
+        When True, skip the transcription and text enrichment stages.
+    normalize_events:
+        When True, apply the experimental event normalization rewriter
+        as a final post-processing step. This ensures consistent defaults
+        for timeline/subject fields and normalizes Word event text.
     """
     transforms = [
         ExtractAudioFromVideo(),
@@ -92,7 +105,14 @@ def get_audio_and_text_events(
     events = standardize_events(events)
     for transform in transforms:
         events = transform(events)
-    return standardize_events(events)
+    events = standardize_events(events)
+
+    if normalize_events:
+        from tribev2.experimental import default_rewriter
+
+        events = default_rewriter().rewrite(events)
+
+    return events
 
 
 class TextToEvents(pydantic.BaseModel):
