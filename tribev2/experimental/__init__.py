@@ -10,15 +10,32 @@ from .channels import (
     ServiceNamespace,
 )
 from .hybrid import HybridRuntime, render_maude_module
+from .remote import (
+    ChannelClient,
+    ChannelServer,
+    RemoteChannelService,
+    run_remote_pipeline,
+)
 from .rewrite import (
     EventNormalizationContract,
     EventRewriteRule,
     EventRewriter,
     default_rewriter,
 )
+from .trace import (
+    RewriteTraceRecord,
+    TraceStore,
+    create_trace_record,
+    deserialize_trace,
+    load_trace,
+    save_trace,
+    serialize_trace,
+)
 from .vfs import EventNamespaceFS
 
 __all__ = [
+    "ChannelClient",
+    "ChannelServer",
     "ChannelService",
     "EventChannel",
     "EventNormalizationContract",
@@ -26,7 +43,16 @@ __all__ = [
     "EventRewriteRule",
     "EventRewriter",
     "HybridRuntime",
+    "RemoteChannelService",
+    "RewriteTraceRecord",
     "ServiceNamespace",
+    "TraceStore",
+    "create_trace_record",
     "default_rewriter",
+    "deserialize_trace",
+    "load_trace",
     "render_maude_module",
+    "run_remote_pipeline",
+    "save_trace",
+    "serialize_trace",
 ]

@@ -112,9 +112,20 @@ And a minimal **Limbo-style channel runtime scaffold** (`tribev2.experimental.ch
 - render rewrite declarations as conservative Maude-style module text,
 - connect explicit rewrite semantics to practical distributed-style execution.
 
+Additionally, we now have:
+
+- **Trace serialization** (`tribev2.experimental.trace`) for persisting rule-execution traces
+  as reproducibility/debugging artifacts.
+- **Remote-capable channels** (`tribev2.experimental.remote`) enabling distributed pipeline
+  execution where services can run on separate nodes via socket-based communication.
+- **Integration hook** in `demo_utils.get_audio_and_text_events` with an optional
+  `normalize_events=True` parameter for post-processing event normalization.
+
 See:
 - `tribev2/experimental/rewrite.py`
 - `tribev2/experimental/vfs.py`
 - `tribev2/experimental/channels.py`
 - `tribev2/experimental/hybrid.py`
+- `tribev2/experimental/trace.py`
+- `tribev2/experimental/remote.py`
 - `docs/unconventional_runtime_initial_steps.md`

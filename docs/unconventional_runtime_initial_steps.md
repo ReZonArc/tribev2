@@ -90,8 +90,65 @@ Why this is the right next step:
   Limbo-style runtime composition.
 - Existing training/inference APIs remain unchanged.
 
-## Suggested next steps (not yet implemented)
+## ✅ Step 5 implemented: rule-execution trace serializer
 
-1. Add a rule-execution trace serializer to persist `run_with_trace` output for reproducibility/debugging artifacts.
-2. Add integration hook in `demo_utils.get_audio_and_text_events` as an optional post-normalization stage.
-3. Add remote-capable channels (e.g., via sockets or gRPC) so services can run on separate nodes.
+Added:
+- `tribev2/experimental/trace.py`
+
+What this provides:
+- `RewriteTraceRecord`: a frozen dataclass capturing applied rules, event digests,
+  timestamp, and optional metadata.
+- `create_trace_record`: creates a trace record from rewrite execution inputs/outputs.
+- `serialize_trace` / `deserialize_trace`: JSON serialization for trace records.
+- `save_trace` / `load_trace`: file I/O helpers for trace persistence.
+- `TraceStore`: a simple directory-backed trace store for managing multiple traces.
+
+Why this is the right step:
+- Enables reproducibility and debugging by persisting `run_with_trace` output.
+- Provides audit trails for event pipeline transformations.
+- Supports compliance and quality assurance workflows.
+
+## ✅ Step 6 implemented: integration hook in demo_utils
+
+Updated:
+- `tribev2/demo_utils.py`
+
+What this provides:
+- `get_audio_and_text_events` now accepts an optional `normalize_events=True`
+  parameter that applies the experimental event normalization rewriter as a
+  final post-processing step.
+
+Why this is the right step:
+- Provides a zero-friction way to enable event normalization in the main
+  inference pipeline.
+- Maintains backward compatibility (normalization is off by default).
+- Demonstrates practical integration of the experimental rewrite scaffold.
+
+## ✅ Step 7 implemented: remote-capable channels
+
+Added:
+- `tribev2/experimental/remote.py`
+
+What this provides:
+- `ChannelServer`: a socket-based server that accepts remote channel connections
+  and applies a transform function to incoming event DataFrames.
+- `ChannelClient`: a client that connects to a remote channel server and
+  sends/receives events.
+- `RemoteChannelService`: a service wrapper that delegates to a remote server,
+  allowing remote transforms to be mounted in a `ServiceNamespace`.
+- `run_remote_pipeline`: utility function to run events through a sequence of
+  remote servers.
+
+Why this is the right step:
+- Enables distributed pipeline execution where services run on separate nodes.
+- Extends the Limbo-style channel model to a true distributed setting.
+- Uses a simple, lightweight socket protocol for easy deployment.
+- Maintains compatibility with the existing `ServiceNamespace` abstraction.
+
+## Suggested future extensions
+
+1. Add TLS/authentication layer to `ChannelServer` for secure remote execution.
+2. Add service discovery mechanism for dynamic distributed pipelines.
+3. Integrate trace serialization directly into `HybridRuntime` for automatic audit logging.
+4. Add batching support to `ChannelClient` for improved throughput.
+5. Add gRPC or HTTP/2 transport option for better interoperability.
